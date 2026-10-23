@@ -54,6 +54,10 @@ export default class FoldablePlugin extends Plugin {
 	// The note in the second pane when the phone was last folded, reopened
 	// beside the first when it is unfolded again.
 	companionPath: string | undefined;
+	// Set on unfolding until the second pane opens. Obsidian switches from
+	// its phone layout to its tablet layout a moment after the screen
+	// changes, and a split can only be made once it has.
+	splitPending = false;
 
 	async onload() {
 		this.addCommand({
@@ -78,6 +82,10 @@ export default class FoldablePlugin extends Plugin {
 			posture.addEventListener("change", update);
 			this.register(() => posture.removeEventListener("change", update));
 		}
+
+		const observer = new MutationObserver(() => { if (this.splitPending) void this.trySplit(); });
+		observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+		this.register(() => observer.disconnect());
 
 		this.app.workspace.onLayoutReady(() => this.update());
 	}
@@ -114,13 +122,19 @@ export default class FoldablePlugin extends Plugin {
 		body.style.setProperty("--foldable-hinge", `${layout.hingeAt ?? middle}px`);
 
 		if (previous?.mode === layout.mode) return;
-		if (showsTwoPanes(layout.mode)) void this.openSecondPane(layout);
+		this.splitPending = showsTwoPanes(layout.mode);
+		if (this.splitPending) void this.trySplit();
 		else if (!previous || showsTwoPanes(previous.mode)) this.closeSecondPane();
 	}
 
 	rootLeaves(): WorkspaceLeaf[] {
+		// iterateRootLeaves reports only one leaf on Obsidian for Android, even
+		// with several panes showing.
+		const workspace = this.app.workspace;
 		const leaves: WorkspaceLeaf[] = [];
-		this.app.workspace.iterateRootLeaves(leaf => { leaves.push(leaf); });
+		workspace.iterateAllLeaves(leaf => {
+			if (leaf.getRoot() === workspace.rootSplit) leaves.push(leaf);
+		});
 		return leaves;
 	}
 
@@ -130,8 +144,17 @@ export default class FoldablePlugin extends Plugin {
 		return !document.body.hasClass("is-phone");
 	}
 
+	async trySplit() {
+		if (!this.settings.twoPanes || !this.layout) {
+			this.splitPending = false;
+			return;
+		}
+		if (!this.canSplit()) return;
+		this.splitPending = false;
+		await this.openSecondPane(this.layout);
+	}
+
 	async openSecondPane(layout: Layout) {
-		if (!this.settings.twoPanes || !this.canSplit()) return;
 		const leaves = this.rootLeaves();
 		if (leaves.length !== 1) return;
 		const [first] = leaves;
