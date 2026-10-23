@@ -1,0 +1,43 @@
+/* Two panes meet at the hinge: equal halves, since the Pixel folds' hinge
+   is centered. */
+body.foldable-flat .workspace-split.mod-root .workspace-tabs,
+body.foldable-book .workspace-split.mod-root .workspace-tabs {
+	flex: 1 1 0 !important;
+}
+
+/* Tabletop: the app fills the top half, down to the hinge. */
+body.foldable-tabletop.foldable-controls-on .app-container {
+	height: var(--foldable-hinge);
+}
+
+.foldable-controls {
+	display: none;
+}
+
+body.foldable-tabletop.foldable-controls-on .foldable-controls {
+	display: flex;
+	position: fixed;
+	top: var(--foldable-hinge);
+	left: 0;
+	right: 0;
+	bottom: 0;
+	align-items: center;
+	justify-content: space-evenly;
+	padding: 16px env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+	background: var(--background-secondary);
+	border-top: 1px solid var(--background-modifier-border);
+	z-index: var(--layer-popover);
+}
+
+.foldable-controls button {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: var(--interactive-normal);
+	box-shadow: none;
+}
+
+.foldable-controls button svg {
+	width: 32px;
+	height: 32px;
+}

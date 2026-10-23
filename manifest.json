@@ -1,0 +1,9 @@
+{
+	"id": "foldable",
+	"name": "Foldable",
+	"version": "0.1.0",
+	"minAppVersion": "1.7.2",
+	"description": "Adapts Obsidian to foldable phones: two panes when unfolded, one when folded, and a tabletop layout when half-folded.",
+	"author": "Bob Myers",
+	"isDesktopOnly": false
+}
